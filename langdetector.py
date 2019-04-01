@@ -1,6 +1,7 @@
 import sys
 import re
 from os import listdir
+from typing import List
 
 ARG_ERROR = "Error wrong arguments. \nUsage: python " + sys.argv[0] + " train <N-gram size> <train_folder>\n" \
             + "or: python " + sys.argv[0] + " detect <N-gram size> <file>"
@@ -75,9 +76,18 @@ def load_trained_weights(extension: str) -> dict:
     return weights
 
 
+def weight_with_defined_ngrams(text: str, ngrams: List[str]) -> dict:
+    weights = {}
+    for ngram in ngrams:
+        weights[ngram] = text.count(ngram)
+    return weights
+
+
 def detect_with_unigrams(text: str) -> str:
-    text_unigrams = weight_unigrams(text)
     trained_unigrams = load_trained_weights(UNIGRAM_WEIGHTS_EXTENSION)
+    text_unigrams = {}
+    for language in trained_unigrams.keys():
+        text_unigrams[language] = weight_with_defined_ngrams(text, trained_unigrams[language].keys())
     # TODO pearson correlation comparison
     return "No yet implemented"
 
@@ -89,13 +99,17 @@ def detect_with_bigrams(text: str) -> str:
     return "no yet implemented"
 
 
-def detect_language(ngram_size, file: str) -> str:
+def detect_languages(ngram_size, file: str) -> List[str]:
+    result = []
     with open(file, "r") as file_d:
-        text = preprocess_text(file_d.read())
-        if ngram_size == 1:
-            return detect_with_unigrams(text)
-        else:
-            return detect_with_bigrams(text)
+        lines = file_d.readlines()
+        for line in lines:
+            text = preprocess_text(line)
+            if ngram_size == 1:
+                result.append(detect_with_unigrams(text))
+            else:
+                result.append(detect_with_bigrams(text))
+    return result
 
 
 def main(*args):
@@ -103,7 +117,7 @@ def main(*args):
         if args[0] == "train":
             train(int(args[1]), args[2])
         elif args[0] == "detect":
-            print(detect_language(int(args[1]), args[2]))
+            print(detect_languages(int(args[1]), args[2]))
         else:
             print(ARG_ERROR)
     else:
