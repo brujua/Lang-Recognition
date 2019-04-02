@@ -13,7 +13,7 @@ Will create the weights/frequency files needed for detection.
 ```bash
 python langdetector.py detect <Ngram-size> <test-file> <solutions-file>
 ```
-Will perform the test and output the accuracy obtained as well as the lines where the algorithm got it wrong.
+Will perform the test and output the accuracy obtained, as well as the lines where the algorithm got it wrong.
 
 ```bash
 python langdetector.py langdetect <test-file> <solutions-file>
