@@ -2,17 +2,19 @@ import sys
 import re
 import numpy
 from os import listdir
+import langdetect
 from typing import List
 
 ARG_ERROR = "Error wrong arguments. \nUsage: python " + sys.argv[0] + " train <N-gram size> <train_folder>\n" \
-            + "or: python " + sys.argv[0] + " detect <N-gram size> <test-file> <solutions-file>"
+            + "or: python " + sys.argv[0] + " detect <N-gram size> <test-file> <solutions-file>\n" \
+            + "or: python " + sys.argv[0] + " langdetect <test-file> <solutions-file>\n" \
+            + "the last one uses the library langdetect non deterministically to perform the analysis."
 
 UNIGRAM_WEIGHTS_EXTENSION = "-unigram-weights.txt"
 BIGRAM_WEIGHTS_EXTENSION = "-bigram-weights.txt"
 WEIGHT_ENCODING = "utf-8"
 SPACE = " "
 NGRAM_WEIGHT_SEPARATOR = "\t"
-SOLUTION_FILE = "solution"
 
 
 def preprocess_text(text: str) -> str:
@@ -136,13 +138,31 @@ def load_solution(file_name: str) -> List[str]:
     return solutions
 
 
-def compare_solutions(expected: List[str], actuals: List[str]) -> str:
+def compare_solutions(expected: List[str], actuals: List[str]):
     total = len(expected)
     correct = 0
     for i in range(0, len(expected)):
         if expected[i] == actuals[i]:
             correct += 1
-    return "Accuracy = " + '%.2f' % ((correct / total) * 100) + "%"
+        else:
+            print("Wrong for line " + str(i+1) + " Expected " + expected[i] + " Got " + actuals[i])
+    print("Accuracy = " + '%.2f' % ((correct / total) * 100) + "%")
+
+
+def detect_languages_with_langdetec(file: str) -> List[str]:
+    result = []
+    with open(file, "r") as file_d:
+        lines = file_d.readlines()
+        for line in lines:
+            lang = langdetect.detect(line)
+            if lang == "en":
+                lang = "English"
+            elif lang == "it":
+                lang = "Italian"
+            elif lang == "fr":
+                lang = "French"
+            result.append(lang)
+    return result
 
 
 def main(*args):
@@ -152,7 +172,11 @@ def main(*args):
         elif args[0] == "detect" and len(args) == 4:
             detected = detect_languages(int(args[1]), args[2])
             solution = load_solution(args[3])
-            print(compare_solutions(solution, detected))
+            compare_solutions(solution, detected)
+        elif args[0] == "langdetect" and len(args) == 3:
+            detected = detect_languages_with_langdetec(args[1])
+            solution = load_solution(args[2])
+            compare_solutions(solution, detected)
         else:
             print(ARG_ERROR)
     else:
